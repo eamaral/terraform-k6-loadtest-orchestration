@@ -41,13 +41,18 @@ echo ""
 echo "===== [3/3] terraform-k6-loadtest-runner ====="
 cd terraform-k6-loadtest-runner
 terraform init
-terraform apply -auto-approve \
-  -var="vpc_id=$VPC_ID" \
-  -var="subnet_ids=$PUBLIC_SUBNETS" \
-  -var="private_subnets=$PRIVATE_SUBNETS" \
-  -var="cluster_name=$CLUSTER_NAME" \
-  -var="cluster_id=$CLUSTER_ID" \
-  -var="task_execution_role_arn=arn:aws:iam::124355673305:role/ecsTaskExecutionRole"
+
+# Gerar runner.auto.tfvars com os valores corretos
+cat <<EOF > runner.auto.tfvars
+vpc_id = "$VPC_ID"
+subnet_ids = $PUBLIC_SUBNETS
+private_subnets = $PRIVATE_SUBNETS
+cluster_name = "$CLUSTER_NAME"
+cluster_id = "$CLUSTER_ID"
+task_execution_role_arn = "arn:aws:iam::124355673305:role/ecsTaskExecutionRole"
+EOF
+
+terraform apply -auto-approve
 cd ..
 
 # Salvar env file
