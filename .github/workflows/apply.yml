@@ -1,0 +1,51 @@
+name: Apply Terraform and Update Secrets
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply-and-sync-secrets:
+    runs-on: ubuntu-latest
+    env:
+      REPO_TO_UPDATE: eamaral/k6-loadtest-ecs
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
+
+      - name: Run apply-all.sh
+        run: |
+          chmod +x apply-all.sh
+          ./apply-all.sh
+
+      - name: Parse k6_infra_values.env into secrets
+        id: parse_env
+        run: |
+          cat k6_infra_values.env | while read line; do
+            if [[ "$line" == export* ]]; then
+              key=$(echo "$line" | cut -d '=' -f1 | sed 's/export //')
+              value=$(echo "$line" | cut -d '=' -f2- | sed 's/"//g')
+              echo "$key=$value" >> parsed.env
+            fi
+          done
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      - name: Auth GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
+
+      - name: Update secrets in target repo
+        run: |
+          while IFS='=' read -r key value; do
+            gh secret set "$key" --repo "$REPO_TO_UPDATE" --body "$value"
+          done < parsed.env

@@ -1,0 +1,27 @@
+name: Destroy Terraform Infra
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  destroy:
+    name: Destroy Infraestrutura
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Executar Destroy All
+        run: |
+          chmod +x destroy-all.sh
+          ./destroy-all.sh
+
