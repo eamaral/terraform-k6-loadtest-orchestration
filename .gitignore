@@ -1,0 +1,8 @@
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+*.tfvars
+*.tfvars.json
+k6_infra_values.env
+.DS_Store
