@@ -22,8 +22,8 @@ cd terraform-k6-loadtest-network
 terraform init
 terraform apply -auto-approve
 VPC_ID=$(terraform output -raw vpc_id)
-PUBLIC_SUBNETS=$(terraform output -json public_subnets)
-PRIVATE_SUBNETS=$(terraform output -json private_subnets)
+PUBLIC_SUBNETS=$(terraform output -json public_subnets | jq -c '.')
+PRIVATE_SUBNETS=$(terraform output -json private_subnets | jq -c '.')
 cd ..
 
 # 2. CLUSTER
@@ -42,15 +42,15 @@ echo "===== [3/3] terraform-k6-loadtest-runner ====="
 cd terraform-k6-loadtest-runner
 terraform init
 
-# Gerar runner.auto.tfvars com os valores corretos
+# Gerar runner.auto.tfvars com os valores corretos (todos em uma única linha JSON-safe)
 cat <<EOF > runner.auto.tfvars
-vpc_id             = "$VPC_ID"
-subnet_ids         = $PUBLIC_SUBNETS
-private_subnets    = $PRIVATE_SUBNETS
-cluster_name       = "$CLUSTER_NAME"
-cluster_id         = "$CLUSTER_ID"
+vpc_id                  = "$VPC_ID"
+subnet_ids              = $PUBLIC_SUBNETS
+private_subnets         = $PRIVATE_SUBNETS
+cluster_name            = "$CLUSTER_NAME"
+cluster_id              = "$CLUSTER_ID"
 task_execution_role_arn = "arn:aws:iam::124355673305:role/ecsTaskExecutionRole"
-aws_region         = "us-east-1"
+aws_region              = "us-east-1"
 EOF
 
 terraform apply -auto-approve
