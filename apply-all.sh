@@ -13,7 +13,7 @@ done
 echo ""
 echo "🚀 Provisionando infraestrutura de teste de carga com k6..."
 
-rm -f k6_infra_values.env
+rm -f k6_infra_values.env runner.auto.tfvars
 
 # 1. NETWORK
 echo ""
@@ -44,12 +44,13 @@ terraform init
 
 # Gerar runner.auto.tfvars com os valores corretos
 cat <<EOF > runner.auto.tfvars
-vpc_id = "$VPC_ID"
-subnet_ids = $PUBLIC_SUBNETS
-private_subnets = $PRIVATE_SUBNETS
-cluster_name = "$CLUSTER_NAME"
-cluster_id = "$CLUSTER_ID"
+vpc_id             = "$VPC_ID"
+subnet_ids         = $PUBLIC_SUBNETS
+private_subnets    = $PRIVATE_SUBNETS
+cluster_name       = "$CLUSTER_NAME"
+cluster_id         = "$CLUSTER_ID"
 task_execution_role_arn = "arn:aws:iam::124355673305:role/ecsTaskExecutionRole"
+aws_region         = "us-east-1"
 EOF
 
 terraform apply -auto-approve
