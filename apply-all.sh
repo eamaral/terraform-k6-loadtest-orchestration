@@ -22,8 +22,9 @@ cd terraform-k6-loadtest-network
 terraform init
 terraform apply -auto-approve
 VPC_ID=$(terraform output -raw vpc_id)
-PUBLIC_SUBNETS=$(terraform output -json public_subnets | jq -c '.')
-PRIVATE_SUBNETS=$(terraform output -json private_subnets | jq -c '.')
+PUBLIC_SUBNETS=$(terraform output -json public_subnets | jq -c)
+PRIVATE_SUBNETS=$(terraform output -json private_subnets | jq -c)
+
 cd ..
 
 # 2. CLUSTER
