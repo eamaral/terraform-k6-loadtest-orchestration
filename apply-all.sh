@@ -13,38 +13,45 @@ done
 echo ""
 echo "🚀 Provisionando infraestrutura de teste de carga com k6..."
 
-rm -f k6_infra_values.env runner.auto.tfvars
+rm -f k6_infra_values.env terraform-k6-loadtest-runner/runner.auto.tfvars
 
 # 1. NETWORK
 echo ""
 echo "===== [1/3] terraform-k6-loadtest-network ====="
 cd terraform-k6-loadtest-network
-terraform init
-terraform apply -auto-approve
-NETWORK_OUTPUT=$(terraform output -json)
-VPC_ID=$(echo "$NETWORK_OUTPUT" | jq -r '.vpc_id.value')
-PUBLIC_SUBNETS=$(terraform output -json -no-color public_subnets | jq -c '.')
-PRIVATE_SUBNETS=$(terraform output -json -no-color private_subnets | jq -c '.')
+terraform init -no-color
+terraform apply -auto-approve -no-color
 
+VPC_ID=$(terraform output -raw vpc_id -no-color)
+PUBLIC_SUBNETS=$(terraform output -json public_subnets -no-color | jq -c '.' | tr -d '\n')
+PRIVATE_SUBNETS=$(terraform output -json private_subnets -no-color | jq -c '.' | tr -d '\n')
+
+echo "🔍 VPC_ID: $VPC_ID"
+echo "🔍 PUBLIC_SUBNETS: $PUBLIC_SUBNETS"
+echo "🔍 PRIVATE_SUBNETS: $PRIVATE_SUBNETS"
 cd ..
 
 # 2. CLUSTER
 echo ""
 echo "===== [2/3] terraform-k6-loadtest-cluster ====="
 cd terraform-k6-loadtest-cluster
-terraform init
-terraform apply -auto-approve
-CLUSTER_OUTPUT=$(terraform output -json)
-CLUSTER_ID=$(echo "$CLUSTER_OUTPUT" | jq -r '.cluster_arn.value')
-CLUSTER_NAME=$(echo "$CLUSTER_OUTPUT" | jq -r '.cluster_name.value')
+terraform init -no-color
+terraform apply -auto-approve -no-color
+
+CLUSTER_ID=$(terraform output -raw cluster_arn -no-color)
+CLUSTER_NAME=$(terraform output -raw cluster_name -no-color)
+
+echo "🔍 CLUSTER_ID: $CLUSTER_ID"
+echo "🔍 CLUSTER_NAME: $CLUSTER_NAME"
 cd ..
 
 # 3. RUNNER
 echo ""
 echo "===== [3/3] terraform-k6-loadtest-runner ====="
 cd terraform-k6-loadtest-runner
-terraform init
+terraform init -no-color
 
+echo "💾 Gerando runner.auto.tfvars..."
 cat <<EOF > runner.auto.tfvars
 vpc_id                  = "$VPC_ID"
 subnet_ids              = $PUBLIC_SUBNETS
@@ -55,10 +62,13 @@ task_execution_role_arn = "arn:aws:iam::124355673305:role/ecsTaskExecutionRole"
 aws_region              = "us-east-1"
 EOF
 
-terraform apply -auto-approve
+echo "📄 runner.auto.tfvars gerado com sucesso:"
+cat runner.auto.tfvars
+
+terraform apply -auto-approve -no-color
 cd ..
 
-# Gerar env file
+# 4. SALVAR ENV
 echo ""
 echo "💾 Salvando variáveis em k6_infra_values.env..."
 cat <<EOF > k6_infra_values.env
