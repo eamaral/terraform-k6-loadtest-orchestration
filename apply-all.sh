@@ -23,8 +23,9 @@ terraform init
 terraform apply -auto-approve
 NETWORK_OUTPUT=$(terraform output -json)
 VPC_ID=$(echo "$NETWORK_OUTPUT" | jq -r '.vpc_id.value')
-PUBLIC_SUBNETS=$(echo "$NETWORK_OUTPUT" | jq -c '.public_subnets.value')
-PRIVATE_SUBNETS=$(echo "$NETWORK_OUTPUT" | jq -c '.private_subnets.value')
+PUBLIC_SUBNETS=$(terraform output -json -no-color public_subnets | jq -c '.')
+PRIVATE_SUBNETS=$(terraform output -json -no-color private_subnets | jq -c '.')
+
 cd ..
 
 # 2. CLUSTER
