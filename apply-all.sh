@@ -21,9 +21,10 @@ echo "===== [1/3] terraform-k6-loadtest-network ====="
 cd terraform-k6-loadtest-network
 terraform init
 terraform apply -auto-approve
-VPC_ID=$(terraform output -raw vpc_id)
-PUBLIC_SUBNETS=$(terraform output -json public_subnets)
-PRIVATE_SUBNETS=$(terraform output -json private_subnets)
+NETWORK_OUTPUT=$(terraform output -json)
+VPC_ID=$(echo "$NETWORK_OUTPUT" | jq -r '.vpc_id.value')
+PUBLIC_SUBNETS=$(echo "$NETWORK_OUTPUT" | jq -c '.public_subnets.value')
+PRIVATE_SUBNETS=$(echo "$NETWORK_OUTPUT" | jq -c '.private_subnets.value')
 cd ..
 
 # 2. CLUSTER
@@ -32,8 +33,9 @@ echo "===== [2/3] terraform-k6-loadtest-cluster ====="
 cd terraform-k6-loadtest-cluster
 terraform init
 terraform apply -auto-approve
-CLUSTER_ID=$(terraform output -raw cluster_arn)
-CLUSTER_NAME=$(terraform output -raw cluster_name)
+CLUSTER_OUTPUT=$(terraform output -json)
+CLUSTER_ID=$(echo "$CLUSTER_OUTPUT" | jq -r '.cluster_arn.value')
+CLUSTER_NAME=$(echo "$CLUSTER_OUTPUT" | jq -r '.cluster_name.value')
 cd ..
 
 # 3. RUNNER
@@ -42,7 +44,6 @@ echo "===== [3/3] terraform-k6-loadtest-runner ====="
 cd terraform-k6-loadtest-runner
 terraform init
 
-# Gerar runner.auto.tfvars com os valores corretos
 cat <<EOF > runner.auto.tfvars
 vpc_id                  = "$VPC_ID"
 subnet_ids              = $PUBLIC_SUBNETS
@@ -56,7 +57,7 @@ EOF
 terraform apply -auto-approve
 cd ..
 
-# Salvar env file
+# Gerar env file
 echo ""
 echo "💾 Salvando variáveis em k6_infra_values.env..."
 cat <<EOF > k6_infra_values.env
